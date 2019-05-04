@@ -170,22 +170,24 @@ fi
 ##############################################################################
 common::stepheader CHECK PREREQUISITES
 ##############################################################################
-if ! common::set_cloud_binaries; then
-  logecho "Releasing Kubernetes requires gsutil and gcloud. Please download,"
-  logecho "install and authorize through the Google Cloud SDK:"
-  logecho
-  logecho "https://developers.google.com/cloud/sdk/"
-  common::exit 1
-fi
+# if ! common::set_cloud_binaries; then
+#   logecho "Releasing Kubernetes requires gsutil and gcloud. Please download,"
+#   logecho "install and authorize through the Google Cloud SDK:"
+#   logecho
+#   logecho "https://developers.google.com/cloud/sdk/"
+#   common::exit 1
+# fi
 
-# Nothing should work without this.  The entire release workflow depends
-# on it whether running from the desktop or GCB
-GCP_USER=$($GCLOUD auth list --filter=status:ACTIVE \
-                             --format="value(account)" 2>/dev/null)
-[[ -n "$GCP_USER" ]] || common::exit 1 "Unable to set a valid GCP credential!"
+# # Nothing should work without this.  The entire release workflow depends
+# # on it whether running from the desktop or GCB
+# GCP_USER=$($GCLOUD auth list --filter=status:ACTIVE \
+#                              --format="value(account)" 2>/dev/null)
+# [[ -n "$GCP_USER" ]] || common::exit 1 "Unable to set a valid GCP credential!"
 
-logecho -n "Check release bucket $RELEASE_BUCKET: "
-logrun -s release::gcs::check_release_bucket $RELEASE_BUCKET || common::exit 1
+# logecho -n "Check release bucket $RELEASE_BUCKET: "
+# logrun -s release::gcs::check_release_bucket $RELEASE_BUCKET || common::exit 1
+
+logecho "SKIP"
 
 # These operations can hit bumps and are re-entrant so retry up to 3 times
 max_attempts=3
@@ -203,7 +205,7 @@ while ((attempt<max_attempts)); do
                                                   $FLAGS_release_kind
     release::gcs::push_release_artifacts \
      $KUBE_ROOT/_output/gcs-stage/$LATEST \
-     gs://$RELEASE_BUCKET/$GCS_DEST/$LATEST && break
+     s3://$RELEASE_BUCKET/$GCS_DEST/$LATEST && break
   fi
   ((attempt++))
 done
